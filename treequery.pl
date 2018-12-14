@@ -4,10 +4,15 @@ use strict;
 use feature "say";
 use Data::Dumper;
 
-my $data_file = "treedata.csv";
+my $argument = @ARGV;
+my $treefile =$ARGV[0];
+
+if ($argument != 1) {
+        die "USAGE: Input .csv file" ; #"USAGE: Input.csv file"
+}
 my @nyc_trees = ();
 
-open(my $fh, $data_file) or die "Could not open file $data_file: $!";
+open(my $fh, $treefile) or die "Could not open file $treefile: $!";
 while(my $line = <$fh>) {
     my %tree = ();
     chomp $line;
@@ -54,6 +59,23 @@ sub zip_of_trees {
     return join(", ", @uniq_zips);
 }
 
+sub avg_diam {
+    my $tree_type = shift;
+    my @treediameters = ();
+    foreach my $tree_ref (@nyc_trees) {
+        if (${$tree_ref}{pc_common} eq $tree_type) {
+            #say " I see ${$tree_ref}{zipcode}";
+            push(@treediameters, ${$tree_ref}{tree_dbh}); 
+        }
+    }
+    my $totaldiameter = 0;
+    foreach my $tree_diam (@treediameters) {
+        $totaldiameter = $totaldiameter + $tree_diam;
+    }
+    my $average = $totaldiameter / (scalar @treediameters);
+    return $average;
+}
+
 while (1) {
     print 'Enter the name of a type of tree, or enter "quit" to quit: ';
     my $input = <STDIN>;
@@ -66,8 +88,10 @@ while (1) {
         my $number_of_trees = &number_of_trees($tree_type);
         if ($number_of_trees > 0) {
             my $zip_of_trees = &zip_of_trees($tree_type);
+            my $avg_diameter_of_trees = &avg_diam($tree_type);
             say "total number of such trees: ", $number_of_trees; 
             say "zip codes in which this tree is found: ", $zip_of_trees;
+            say "average diameter: ", $avg_diameter_of_trees;
         }
         else {
             say "I found no trees called $tree_type";
