@@ -1,13 +1,17 @@
 #!/usr/bin/env perl
 
-$data_file = "data.csv";
-@nyc_trees = [];
+use strict;
+use feature "say";
+use Data::Dumper;
 
-open($fh, $data_file) or die "Could not open file $data_file: $!";
-while($line = <$fh>) {
-    %tree = {};
+my $data_file = "treedata.csv";
+my @nyc_trees = ();
+
+open(my $fh, $data_file) or die "Could not open file $data_file: $!";
+while(my $line = <$fh>) {
+    my %tree = ();
     chomp $line;
-    @tree_data = split(/,/, $line);
+    my @tree_data = split(/,/, $line);
     $tree{'tree_id'} = $tree_data[0];
     $tree{'tree_dbh'} = $tree_data[1];
     $tree{'health'} = $tree_data[2];
@@ -15,13 +19,58 @@ while($line = <$fh>) {
     $tree{'zipcode'} = $tree_data[4];
     $tree{'boroname'} = $tree_data[5];
     $tree{'nta_name'} = $tree_data[6];
-    $latitude = $tree_data[7];
-    $longitude = $tree_data[8];
-    %gps_coordinates = (
+    my $latitude = $tree_data[7];
+    my $longitude = $tree_data[8];
+    my %gps_coordinates = (
                         "latitude", $latitude,
                         "longitude", $longitude
                     );
     $tree{'gps_coordinates'} = \%gps_coordinates;
-    print "$tree{'tree_id'}, $tree{'pc_common'}\n";
-    push @nyc_trees, %tree;
+    #print "$tree{'tree_id'}, $tree{'pc_common'}, $tree{'zipcode'}, \n";
+    push @nyc_trees, \%tree;
+}
+
+sub number_of_trees {
+    my $tree_type = shift;
+    my $tree_ctr = 0;
+    foreach my $tree_ref (@nyc_trees) {
+        if (${$tree_ref}{pc_common} eq $tree_type) {
+            $tree_ctr++;
+        }
+    }
+    return $tree_ctr;
+}
+
+sub zip_of_trees {
+    my $tree_type = shift;
+    my %zips = ();
+    foreach my $tree_ref (@nyc_trees) {
+        if (${$tree_ref}{pc_common} eq $tree_type) {
+            #say " I see ${$tree_ref}{zipcode}";
+            $zips{${$tree_ref}{zipcode}}++;
+        }
+    }
+    my @uniq_zips = sort(keys %zips);
+    return join(", ", @uniq_zips);
+}
+
+while (1) {
+    print 'Enter the name of a type of tree, or enter "quit" to quit: ';
+    my $input = <STDIN>;
+    chomp $input;
+    if ($input eq "quit") {
+        exit;
+    }
+    else {
+        my $tree_type = $input;
+        my $number_of_trees = &number_of_trees($tree_type);
+        if ($number_of_trees > 0) {
+            my $zip_of_trees = &zip_of_trees($tree_type);
+            say "total number of such trees: ", $number_of_trees; 
+            say "zip codes in which this tree is found: ", $zip_of_trees;
+        }
+        else {
+            say "I found no trees called $tree_type";
+        }
+    }
 }
