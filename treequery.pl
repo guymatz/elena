@@ -76,6 +76,26 @@ sub avg_diam {
     return $average;
 }
 
+sub trees_in_borough {
+    my $tree_type = shift;
+    my %trees_in_borough = ();
+    foreach my $tree_ref (@nyc_trees) {
+        if (${$tree_ref}{pc_common} eq $tree_type) {
+            $trees_in_borough{${$tree_ref}{boroname}}++; 
+        }
+    }
+    my $max_trees = 0;
+    my $max_boroname = "";
+    foreach my $boro (keys %trees_in_borough) {
+        if ($trees_in_borough{$boro} > $max_trees) {
+            $max_boroname = $boro;
+            $max_trees = $trees_in_borough{$boro};
+        }
+    }
+    #say "$max_boroname, $trees_in_borough{$max_boroname}";
+    return ($max_boroname, $trees_in_borough{$max_boroname});
+}
+
 while (1) {
     print 'Enter the name of a type of tree, or enter "quit" to quit: ';
     my $input = <STDIN>;
@@ -89,8 +109,10 @@ while (1) {
         if ($number_of_trees > 0) {
             my $zip_of_trees = &zip_of_trees($tree_type);
             my $avg_diameter_of_trees = &avg_diam($tree_type);
+            (my $borough, my $trees_in_borough) = &trees_in_borough($tree_type);
             say "total number of such trees: ", $number_of_trees; 
             say "zip codes in which this tree is found: ", $zip_of_trees;
+            say "borough containing the largest number of such trees: ${borough} with ${trees_in_borough}";
             say "average diameter: ", $avg_diameter_of_trees;
         }
         else {
